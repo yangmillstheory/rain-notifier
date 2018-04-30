@@ -40,7 +40,7 @@ data "aws_iam_policy_document" "rain_notifier_notify" {
 }
 
 resource "aws_sns_topic_policy" "rain_notifier_notify" {
-  arn    = "${aws_sns_topic.rain_notifier.arn}"
+  arn    = "${aws_sns_topic.rain_notifier_notify.arn}"
   policy = "${data.aws_iam_policy_document.rain_notifier_notify.json}"
 }
 

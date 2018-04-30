@@ -8,11 +8,13 @@ variable "email_to" {
 }
 
 variable "lat" {
-  type = "string"
+  type    = "string"
+  default = "37.368832"
 }
 
 variable "lng" {
-  type = "string"
+  type    = "string"
+  default = "-122.036346"
 }
 
 variable "api_key" {
@@ -20,7 +22,8 @@ variable "api_key" {
 }
 
 variable "api_url" {
-  type = "string"
+  type    = "string"
+  default = "https://api.darksky.net/forecast"
 }
 
 # this bucket was created outside of Terraform
@@ -46,6 +49,8 @@ module "rain_notifier" {
   alarm_arn        = "${module.sns.error_arn}"
   api_key          = "${var.api_key}"
   api_url          = "${var.api_url}"
+  lat              = "${var.lat}"
+  lng              = "${var.lng}"
 }
 
 module "sns" {
