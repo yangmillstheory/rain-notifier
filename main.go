@@ -137,11 +137,10 @@ func HandleRequest() error {
 
 	var (
 		rs []rainEvent
-		j  int
 	)
 
-	for j, d := sIndex, data[j]; j <= fIndex; j++ {
-		rs = append(rs, rainEvent{d, location})
+	for j := sIndex; j <= fIndex; j++ {
+		rs = append(rs, rainEvent{data[j], location})
 		// if d.PrecipProbability >= .4 {
 		// }
 	}
