@@ -51,6 +51,10 @@ func init() {
 		log.Fatal("Expected LAT to be set.")
 	} else if lng == "" {
 		log.Fatal("Expected LNG to be set.")
+	} else if emailTo == "" {
+		log.Fatal("Expected EMAIL_TO to be set.")
+	} else if topicArn == "" {
+		log.Fatal("Expected TOPIC_ARN to be set.")
 	}
 	log.Printf("Initializing with API URL %s, latitude %s, longitude %s\n", apiURL, lat, lng)
 }
@@ -137,9 +141,9 @@ func HandleRequest() error {
 	)
 
 	for j, d := sIndex, data[j]; j <= fIndex; j++ {
-		if d.PrecipProbability >= .4 {
-			rs = append(rs, rainEvent{d, location})
-		}
+		rs = append(rs, rainEvent{d, location})
+		// if d.PrecipProbability >= .4 {
+		// }
 	}
 
 	if len(rs) == 0 {
@@ -183,7 +187,7 @@ func makeMessage(rs []rainEvent) string {
 	for _, r := range rs {
 		when := time.Unix(r.Time, 0).In(r.location).Format(timeFormat)
 		prob := 100 * r.PrecipProbability
-		lines = append(lines, fmt.Sprintf("\\t%s\\t%f%%", when, prob))
+		lines = append(lines, fmt.Sprintf("%s: %f%%", when, prob))
 	}
 
 	return strings.Join(lines, "\\n")
