@@ -115,14 +115,14 @@ func HandleRequest() error {
 	}
 
 	sTime := time.Now().In(location).Add(
-		time.Duration(10 * time.Hour))
+		time.Duration(9 * time.Hour))
 	fTime := sTime.Add(
-		time.Duration(14 * time.Hour))
+		time.Duration(13 * time.Hour))
 
 	data := rsp.Hourly.Data
 
 	sIndex := search(data, sTime)
-	fIndex := sIndex + 24
+	fIndex := search(data, fTime)
 
 	log.Printf("Found index %d for time %s\n", sIndex, sTime.Format(timeFormat))
 	log.Printf("Found index %d for time %s\n", fIndex, fTime.Format(timeFormat))
@@ -134,7 +134,7 @@ func HandleRequest() error {
 
 	for j, d := sIndex, data[j]; j <= fIndex; j++ {
 		if d.PrecipProbability >= .4 {
-			rs = append(rs, rainEvent{data[j], location})
+			rs = append(rs, rainEvent{d, location})
 		}
 	}
 
@@ -228,7 +228,7 @@ func publish(messageText string, wg *sync.WaitGroup, errc chan<- error) {
 func search(data []datum, t time.Time) int {
 	ts := t.Unix()
 	cmp := func(i int) bool {
-		return data[i].Time < ts
+		return data[i].Time >= ts
 	}
 	return sort.Search(len(data), cmp)
 }
