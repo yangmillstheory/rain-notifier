@@ -190,7 +190,7 @@ func makeMessage(rs []rainEvent) string {
 		lines = append(lines, fmt.Sprintf("%s: %f%%", when, prob))
 	}
 
-	return strings.Join(lines, "\\n")
+	return strings.Join(lines, "\n")
 }
 
 func email(messageText string, attachment []byte, wg *sync.WaitGroup, errc chan<- error) {
