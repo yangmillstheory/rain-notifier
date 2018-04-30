@@ -96,12 +96,16 @@ func HandleRequest() error {
 		err error
 	)
 
+	log.Println("Calling weather API.")
+
 	r, err := httpClient.Do(makeReq())
 	if err != nil {
 		return fmt.Errorf("making request: %v", err)
 	}
 
 	defer r.Body.Close()
+
+	log.Printf("Got response with status code %d and length %d.\n", r.StatusCode, r.ContentLength)
 
 	err = json.NewDecoder(r.Body).Decode(&rsp)
 	if err != nil {
