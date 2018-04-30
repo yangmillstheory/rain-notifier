@@ -26,6 +26,10 @@ variable "api_url" {
   default = "https://api.darksky.net/forecast"
 }
 
+variable "bucket" {
+  default = "yangmillstheory-rain-notifier"
+}
+
 # this bucket was created outside of Terraform
 terraform {
   backend "s3" {
@@ -34,10 +38,6 @@ terraform {
     region  = "us-west-2"
     key     = "rain-notifier.tfstate"
   }
-}
-
-variable "bucket" {
-  default = "yangmillstheory-rain-notifier"
 }
 
 module "rain_notifier" {

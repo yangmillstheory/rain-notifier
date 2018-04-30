@@ -53,6 +53,11 @@ data "terraform_remote_state" "lambda" {
   }
 }
 
+# S3 bucket for entire application
+resource "aws_s3_bucket" "app" {
+  bucket = "${var.bucket}"
+}
+
 resource "aws_sqs_queue" "rain_notifier_deadletter" {
   name = "rain_notifier_deadletter"
 }
@@ -116,6 +121,8 @@ resource "aws_s3_bucket_object" "lambda" {
   key    = "${var.key}"
   source = "${data.archive_file.lambda_zip.output_path}"
   etag   = "${data.archive_file.lambda_zip.output_base64sha256}"
+
+  depends_on = ["aws_s3_bucket.app"]
 }
 
 resource "aws_lambda_function" "rain_notifier" {
@@ -145,6 +152,7 @@ resource "aws_lambda_function" "rain_notifier" {
   role             = "${data.terraform_remote_state.lambda.basic_execution_role_arn}"
   handler          = "main.main"
   source_code_hash = "${data.archive_file.lambda_zip.output_base64sha256}"
+  depends_on       = ["aws_s3_bucket.app"]
 
   timeout = 300
 }
