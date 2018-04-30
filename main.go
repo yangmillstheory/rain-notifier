@@ -124,6 +124,9 @@ func HandleRequest() error {
 	sIndex := search(data, sTime)
 	fIndex := search(data, fTime)
 
+	log.Printf("Found index %d for time %s\n", sIndex, sTime.Format(timeFormat))
+	log.Printf("Found index %d for time %s\n", fIndex, fTime.Format(timeFormat))
+
 	var (
 		rs []rainEvent
 		j  int
