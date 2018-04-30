@@ -56,6 +56,10 @@ data "terraform_remote_state" "lambda" {
 # S3 bucket for entire application
 resource "aws_s3_bucket" "app" {
   bucket = "${var.bucket}"
+
+  provisioner "local-exec" {
+     command = "GOOS=linux go build main.go"
+  }
 }
 
 resource "aws_sqs_queue" "rain_notifier_deadletter" {
@@ -111,7 +115,7 @@ resource "aws_cloudwatch_metric_alarm" "deadletter_queue_alarm" {
 
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  source_file = "main.go"
+  source_file = "main"
   output_path = "lambda/lambda.zip"
 }
 
@@ -150,9 +154,9 @@ resource "aws_lambda_function" "rain_notifier" {
 
   runtime          = "go1.x"
   role             = "${data.terraform_remote_state.lambda.basic_execution_role_arn}"
-  handler          = "main.main"
+  handler          = "main"
   source_code_hash = "${data.archive_file.lambda_zip.output_base64sha256}"
-  depends_on       = ["aws_s3_bucket.app"]
+  depends_on       = ["aws_s3_bucket.app", "aws_s3_bucket_object.lambda"]
 
   timeout = 300
 }
@@ -175,7 +179,7 @@ resource "aws_lambda_permission" "allow_cloudwatch_invoke" {
 resource "aws_cloudwatch_event_rule" "pre_weekday_8pm_pst" {
   name                = "pre-weekday-8pm-pst"
   description         = "Every day before a weekday at 8PM PST"
-  schedule_expression = "cron(0 2 ? * MON-SAT *)"
+  schedule_expression = "cron(0 3 ? * MON-SAT *)"
 }
 
 resource "aws_cloudwatch_event_target" "rain_notifier" {

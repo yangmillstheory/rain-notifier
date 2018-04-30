@@ -122,7 +122,7 @@ func HandleRequest() error {
 	data := rsp.Hourly.Data
 
 	sIndex := search(data, sTime)
-	fIndex := search(data, fTime)
+	fIndex := sIndex + 24
 
 	log.Printf("Found index %d for time %s\n", sIndex, sTime.Format(timeFormat))
 	log.Printf("Found index %d for time %s\n", fIndex, fTime.Format(timeFormat))
