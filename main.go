@@ -135,14 +135,13 @@ func HandleRequest() error {
 	log.Printf("Found index %d for time %s\n", sIndex, sTime.Format(timeFormat))
 	log.Printf("Found index %d for time %s\n", fIndex, fTime.Format(timeFormat))
 
-	var (
-		rs []rainEvent
-	)
+	var rs []rainEvent
 
 	for j := sIndex; j <= fIndex; j++ {
-		rs = append(rs, rainEvent{data[j], location})
-		// if d.PrecipProbability >= .4 {
-		// }
+		d := data[j]
+		if d.PrecipProbability >= .4 {
+			rs = append(rs, rainEvent{d, location})
+		}
 	}
 
 	if len(rs) == 0 {
@@ -174,6 +173,9 @@ func HandleRequest() error {
 
 	select {
 	case err = <-errc:
+		if err != nil {
+			log.Printf("Got an error: %v", err)
+		}
 		return err
 	case <-done:
 		return nil
@@ -186,18 +188,25 @@ func makeMessage(rs []rainEvent) string {
 	for _, r := range rs {
 		when := time.Unix(r.Time, 0).In(r.location).Format(timeFormat)
 		prob := 100 * r.PrecipProbability
-		lines = append(lines, fmt.Sprintf("%s: %f%%", when, prob))
+		lines = append(lines, fmt.Sprintf("%s: %.0f%%", when, prob))
 	}
 
 	return strings.Join(lines, "\n")
 }
 
-func email(messageText string, attachment []byte, wg *sync.WaitGroup, errc chan<- error) {
+func email(messageBody string, attachment []byte, wg *sync.WaitGroup, errc chan<- error) {
 	defer wg.Done()
 
-	messageData := []byte(fmt.Sprintf("From: weather@yangmillstheory.com\\nTo: %s\\nSubject: It might rain soon!\\nMIME-Version: 1.0\\nContent-type: Multipart/Mixed; boundary=\"NextPart\"\\n\\n--NextPart\\nContent-Type: text/plain\\n\\n%s\\n\\n--NextPart\\nContent-Type: text/plain;\\nContent-Disposition: attachment; filename=\"data.json\"\\n\\n", emailTo, messageText))
+	messageText := "From: weather@yangmillstheory.com\n" +
+		"To: %s\nSubject: It might rain soon!\n" +
+		"MIME-Version: 1.0\n" +
+		"Content-type: Multipart/Mixed; boundary=\"NextPart\"\n\n" +
+		"--NextPart\nContent-Type: text/plain\n\n%s\n\n--NextPart\n"
+	messageText = fmt.Sprintf(messageText, emailTo, messageBody)
+	messageData := []byte(messageText)
+	messageData = append(messageData, []byte("Content-Type: text/plain;\nContent-Disposition: attachment; filename=\"data.json\"\n\n")...)
 	messageData = append(messageData, attachment...)
-	messageData = append(messageData, []byte("\\n\\n--NextPart--")...)
+	messageData = append(messageData, []byte("\n\n--NextPart--")...)
 
 	rawInput := &ses.SendRawEmailInput{
 		RawMessage: &ses.RawMessage{Data: messageData},
@@ -214,24 +223,23 @@ func email(messageText string, attachment []byte, wg *sync.WaitGroup, errc chan<
 	log.Println("Email sent.")
 }
 
-func publish(messageText string, wg *sync.WaitGroup, errc chan<- error) {
+func publish(messageBody string, wg *sync.WaitGroup, errc chan<- error) {
 	defer wg.Done()
 
 	log.Printf("Publishing message to SNS topic %s\n", topicArn)
 
-	_, err := snsClient.Publish(&sns.PublishInput{TopicArn: aws.String(topicArn), Message: aws.String(messageText)})
+	_, err := snsClient.Publish(&sns.PublishInput{TopicArn: aws.String(topicArn), Message: aws.String(messageBody)})
 	if err != nil {
-		errc <- err
+		errc <- fmt.Errorf("sending notification: %v", err)
 		return
 	}
 
 	log.Println("Message published.")
 }
 
-// search does a binary search to return the first index in data
-// for which the unix timestamp .Time is after t.
+// search does a binary search to return the first index in data for which the UNIX timestamp .Time is after t.
 //
-// this relies on data being sorted by .Time.
+// This relies on data being sorted by .Time, which is currently (4/30/2018) guaranteed by the API.
 func search(data []datum, t time.Time) int {
 	ts := t.Unix()
 	cmp := func(i int) bool {
