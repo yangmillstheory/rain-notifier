@@ -75,10 +75,10 @@ type rainEvent struct {
 	prob float64
 }
 
-func makeReq() *http.Request {
+func makeRequest() (*http.Request, error) {
 	req, err := http.NewRequest("GET", fullURL, nil)
 	if err != nil {
-		log.Fatalf("creating request: %v", err)
+		return nil, fmt.Errorf("creating request: %v", err)
 	}
 
 	exclude := []string{"currently", "minutely", "daily", "alerts", "flags"}
@@ -87,7 +87,7 @@ func makeReq() *http.Request {
 	qs.Add("exclude", strings.Join(exclude, ","))
 
 	req.URL.RawQuery = qs.Encode()
-	return req
+	return req, nil
 }
 
 // HandleRequest makes an authenticated call to the Dark Sky API.
@@ -102,18 +102,23 @@ func HandleRequest() error {
 
 	log.Println("Calling weather API.")
 
-	r, err := httpClient.Do(makeReq())
+	req, err := makeRequest()
 	if err != nil {
 		return fmt.Errorf("making request: %v", err)
 	}
 
-	defer r.Body.Close()
-
-	log.Printf("Got response with status code %d and length %d.\n", r.StatusCode, r.ContentLength)
-
-	err = json.NewDecoder(r.Body).Decode(&rsp)
+	res, err := httpClient.Do(req)
 	if err != nil {
-		body, _ := ioutil.ReadAll(r.Body)
+		return fmt.Errorf("sending request: %v", err)
+	}
+
+	defer res.Body.Close()
+
+	log.Printf("Got response with status code %d and length %d.\n", res.StatusCode, res.ContentLength)
+
+	err = json.NewDecoder(res.Body).Decode(&rsp)
+	if err != nil {
+		body, _ := ioutil.ReadAll(res.Body)
 		return fmt.Errorf("decoding response %s: %v", string(body), err)
 	}
 
