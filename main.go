@@ -178,7 +178,6 @@ func HandleRequest() error {
 
 	select {
 	case err = <-errc:
-		log.Printf("Got an error: %v", err)
 		return err
 	case <-done:
 		return nil
