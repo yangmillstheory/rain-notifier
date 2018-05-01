@@ -71,8 +71,8 @@ type decodedResponse struct {
 }
 
 type rainEvent struct {
-	datum
-	location *time.Location
+	when string
+	prob float64
 }
 
 func makeReq() *http.Request {
@@ -139,8 +139,13 @@ func HandleRequest() error {
 
 	for j := sIndex; j <= fIndex; j++ {
 		d := data[j]
-		if d.PrecipProbability >= .3 {
-			rs = append(rs, rainEvent{d, location})
+		when := time.Unix(d.Time, 0).In(location).Format(timeFormat)
+		prob := 100 * d.PrecipProbability
+		if prob >= 30 {
+			log.Printf("Uh oh! %.0f%% chance of rain at %s!\n", prob, when)
+			rs = append(rs, rainEvent{when, prob})
+		} else {
+			log.Printf("Phew! Only a %.0f%% chance of rain at %s.\n", prob, when)
 		}
 	}
 
@@ -186,9 +191,7 @@ func makeMessage(rs []rainEvent) string {
 	var lines []string
 
 	for _, r := range rs {
-		when := time.Unix(r.Time, 0).In(r.location).Format(timeFormat)
-		prob := 100 * r.PrecipProbability
-		lines = append(lines, fmt.Sprintf("%s: %.0f%%", when, prob))
+		lines = append(lines, fmt.Sprintf("%s: %.0f%%", r.when, r.prob))
 	}
 
 	return strings.Join(lines, "\n")
