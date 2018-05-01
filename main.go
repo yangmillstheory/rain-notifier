@@ -198,7 +198,8 @@ func email(messageBody string, attachment []byte, wg *sync.WaitGroup, errc chan<
 	defer wg.Done()
 
 	messageText := "From: weather@yangmillstheory.com\n" +
-		"To: %s\nSubject: It might rain soon!\n" +
+		"To: %s\n" +
+		"Subject: It might rain soon!\n" +
 		"MIME-Version: 1.0\n" +
 		"Content-type: Multipart/Mixed; boundary=\"NextPart\"\n\n" +
 		"--NextPart\nContent-Type: text/plain\n\n%s\n\n--NextPart\n"
