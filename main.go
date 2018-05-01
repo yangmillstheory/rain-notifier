@@ -146,6 +146,7 @@ func HandleRequest() error {
 		d := data[j]
 		when := time.Unix(d.Time, 0).In(location).Format(timeFormat)
 		prob := 100 * d.PrecipProbability
+
 		if prob >= 30 {
 			log.Printf("Uh oh! %.0f%% chance of rain at %s!\n", prob, when)
 			rs = append(rs, rainEvent{when, prob})
@@ -165,6 +166,8 @@ func HandleRequest() error {
 		done = make(chan bool)
 	)
 
+	defer close(errc)
+
 	attachment, err := json.Marshal(rsp)
 	if err != nil {
 		return fmt.Errorf("creating attachment: %v", err)
@@ -178,7 +181,6 @@ func HandleRequest() error {
 	go func() {
 		wg.Wait()
 		close(done)
-		close(errc)
 	}()
 
 	select {
