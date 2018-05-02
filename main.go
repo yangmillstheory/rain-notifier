@@ -179,19 +179,13 @@ func HandleRequest() error {
 	go func() {
 		wg.Wait()
 		close(done)
-		close(errc)
 	}()
 
-	select {
-	case err := <-errc:
-		log.Printf("Got error: %v", err)
-		for err := range errc {
-			log.Printf("Got another error: %v", err)
-		}
-		return err
-	default:
-		return nil
+	<-done
+	for err = range errc {
+		log.Printf("Got an error: %v", err)
 	}
+	return err
 }
 
 func makeMessage(rs []rainEvent) string {
