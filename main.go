@@ -179,6 +179,7 @@ func HandleRequest() error {
 	go func() {
 		wg.Wait()
 		close(done)
+		close(errc)
 	}()
 
 	<-done
