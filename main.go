@@ -166,8 +166,6 @@ func HandleRequest() error {
 		done = make(chan bool)
 	)
 
-	defer close(errc)
-
 	attachment, err := json.Marshal(rsp)
 	if err != nil {
 		return fmt.Errorf("creating attachment: %v", err)
@@ -181,12 +179,17 @@ func HandleRequest() error {
 	go func() {
 		wg.Wait()
 		close(done)
+		close(errc)
 	}()
 
 	select {
-	case err = <-errc:
+	case err := <-errc:
+		log.Printf("Got error: %v", err)
+		for err := range errc {
+			log.Printf("Got another error: %v", err)
+		}
 		return err
-	case <-done:
+	default:
 		return nil
 	}
 }
