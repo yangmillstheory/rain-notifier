@@ -163,7 +163,6 @@ func HandleRequest() error {
 	var (
 		wg   sync.WaitGroup
 		errc = make(chan error, 2)
-		done = make(chan bool)
 	)
 
 	attachment, err := json.Marshal(rsp)
@@ -176,13 +175,10 @@ func HandleRequest() error {
 	wg.Add(2)
 	go email(message, attachment, &wg, errc)
 	go publish(message, &wg, errc)
-	go func() {
-		wg.Wait()
-		close(done)
-		close(errc)
-	}()
+	wg.Wait()
 
-	<-done
+	close(errc)
+
 	for err = range errc {
 		log.Printf("Got an error: %v", err)
 	}
