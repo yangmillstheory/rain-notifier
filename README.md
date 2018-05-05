@@ -1,6 +1,6 @@
 # rain-notifier
 
-> Get warned before it's going to rain
+> Don'e get caught in the :zap:
 
 ## Backround
 
